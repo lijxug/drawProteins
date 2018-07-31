@@ -5,7 +5,7 @@
 \title{Add protein domains to ggplot2 object.}
 \usage{
 draw_domains(p, data = data, label_domains = TRUE, label_size = 4,
-    show.legend = TRUE)
+  margin = 0.25, ...)
 }
 \arguments{
 \item{p}{ggplot2 object ideally created with \code{\link{draw_canvas}}.}
@@ -19,7 +19,7 @@ data$type.}
 
 \item{label_size}{Size of the text used for labels.}
 
-\item{show.legend}{Option to include legend in this layer}
+\item{margin}{Control width of domain rect.}
 }
 \value{
 A ggplot2 object either in the plot window or as an object with an

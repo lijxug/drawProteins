@@ -5,7 +5,7 @@
 \title{Add protein repeats sites to ggplot2 object.}
 \usage{
 draw_repeat(p, data = data, label_size = 2, outline = "dimgrey",
-    fill = "dimgrey", label_repeats = TRUE, show.legend = TRUE)
+  fill = "dimgrey", label_repeats = TRUE, show.legend = TRUE)
 }
 \arguments{
 \item{p}{ggplot2 object ideally created with \code{\link{draw_canvas}}.}

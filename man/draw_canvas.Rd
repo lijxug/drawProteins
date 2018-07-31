@@ -8,7 +8,7 @@ draw_canvas(data = data)
 }
 \arguments{
 \item{data}{Dataframe of one or more rows with the following column
-names: 'type', 'description', 'begin', 'end', 'length', 'accession',
+names: 'type', 'description', 'total_length', 'begin', 'end', 'length', 'accession',
 'entryName', 'taxid', 'order'. Must contain a minimum of one "CHAIN" as
 data$type.}
 }
