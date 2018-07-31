@@ -6,7 +6,7 @@
 #' protein.
 #'
 #' @param data Dataframe of one or more rows with the following column
-#' names: 'type', 'description', 'begin', 'end', 'length', 'accession',
+#' names: 'type', 'description', 'total_length', 'begin', 'end', 'length', 'accession',
 #' 'entryName', 'taxid', 'order'. Must contain a minimum of one "CHAIN" as
 #' data$type.
 #'
@@ -35,7 +35,125 @@ draw_canvas <- function(data = data){
     p <- p + ggplot2::labs(x = "Amino acid number") # label x-axis
     p <- p + ggplot2::labs(y = "") # label y-axis
 
+    # delete y axis completely
+    p <- p + ggplot2::theme(
+      axis.line.y = element_blank(),
+      axis.ticks.y = element_blank(), 
+      axis.text.y = element_blank())
     return(p)
+}
+
+
+### draw_mainChain
+#' Create ggplot2 object with protein `total_length` from feature database
+#'
+#' \code{draw_mainChain} uses the dataframe containing the protein features to
+#' plot the mainFrame, the full length proteins. It creates the basic plot element
+#' by determining the length of the longest protein. The ggplot2 function
+#' \code{geom_rect} is then used to draw each of the protein
+#' mainFrame proportional to their number of amino acids (length).
+#'
+#' @param p ggplot2 object ideally created with \code{\link{draw_canvas}}.
+#' @param data Dataframe of one or more rows with the following column
+#' names: 'type', 'description', 'total_length', 'begin', 'end', 'length', 'accession',
+#' 'entryName', 'taxid', 'order'. Must contain a minimum of one "CHAIN" as
+#' data$type.
+#' @param outline Colour of the outline of each chain.
+#' @param fill Colour of the fill of each chain.
+#' @param label_mainFrame Option to label mainFrame or not.
+#' @param labels Vector with source of names for the mainFrame. EntryName used as
+#' default but can be changed.
+#' @param size Size of the outline of the mainFrame.
+#' @param label_size Size of the text used for labels.
+#'
+#' @return A ggplot2 object either in the plot window or as an object.
+#'
+#' @examples
+#' to be supplemented
+#' @export
+draw_mainChain <- function(p,
+                        data = data,
+                        label_mainFrame = TRUE,
+                        labels = NULL,
+                        size = 0.5,
+                        label_size = 4,
+                        margin = 0.1, ...){
+  begin=end=NULL
+  
+  data_to_plot = unique(data[,c("entryName", "total_length", "order")])
+  if(is.null(labels)) labels = data_to_plot$entryName 
+  
+  p <- p + ggplot2::geom_rect(data = data_to_plot,
+                              mapping=ggplot2::aes(xmin=1,
+                                                   xmax=total_length,
+                                                   ymin=order-margin,
+                                                   ymax=order+margin),
+                              # colour = outline,
+                              # fill = fill,
+                              # size = size, 
+                              ...)
+  if(label_mainFrame == TRUE){
+    p <- p +
+      ggplot2::annotate("text", x = -10,
+                        y = data_to_plot$order,
+                        label = labels,
+                        hjust = 1,
+                        size = label_size)
+  }
+  return(p)
+}
+
+### draw_substructure
+#' Add protein substructure, such as signal protein and transmembrane features to ggplot2 object.
+#'
+#' \code{draw_substructure} adds substructure to the ggplot2 object created by
+#' \code{\link{draw_chains}}.
+#' It uses the data object.
+#' The ggplot2 function \code{geom_rect} is used to draw each of the domain
+#' chains proportional to their number of amino acids (length).
+#'
+#' @param p ggplot2 object ideally created with \code{\link{draw_canvas}}.
+#' @param data Dataframe of one or more rows with the following column
+#' names: 'type', 'description', 'begin', 'end', 'length', 'accession',
+#' 'entryName', 'taxid', 'order'. Must contain a minimum of one "CHAIN" as
+#' data$type.
+#' @param label_substructure Option to label substructure or not.
+#' @param label_size Size of the text used for labels.
+#' @param show.legend Option to include legend in this layer
+#' @return A ggplot2 object either in the plot window or as an object with an
+#' additional geom_rect layer.
+#'
+#' @examples
+#' # combines with draw_chains to plot chains and substructure.
+#' data("five_rel_data")
+#' p <- draw_canvas(five_rel_data)
+#' p <- draw_chains(p, five_rel_data, label_size = 1.25)
+#' p <- draw_substructure(p, five_rel_data)
+#' p
+#'
+#' @export
+# called draw_substructure to plot just the substructure
+draw_substructure <- function(p,
+                         data = data,
+                         label_size = 4, 
+                         margin = .1,
+                         ...){
+  begin=end=description=NULL
+  p <- p + ggplot2::geom_rect(data= data[data$type == "substructure",],
+                              mapping=ggplot2::aes(xmin=begin,
+                                                   xmax=end,
+                                                   ymin=order-margin,
+                                                   ymax=order+margin,
+                                                   fill=item), ...)
+  
+  # if(label_substructure == TRUE){
+  #   p <- p + ggplot2::geom_label(data = data[data$type == "substructure", ],
+  #                                ggplot2::aes(x = begin + (end-begin)/2,
+  #                                             y = order, 
+  #                                             label = item),
+  #                                size = label_size)
+  # }
+  return(p)
 }
 
 
@@ -93,13 +211,16 @@ draw_chains <- function(p,
                         label_chains = TRUE,
                         labels = data[data$type == "CHAIN",]$entryName,
                         size = 0.5,
-                        label_size = 4){
+                        label_size = 4, 
+                        margin = .25,
+                        ...){
     begin=end=NULL
     p <- p + ggplot2::geom_rect(data = data[data$type == "CHAIN",],
                         mapping=ggplot2::aes(xmin=begin,
                                             xmax=end,
-                                            ymin=order-0.2,
-                                            ymax=order+0.2),
+                                            ymin=order-margin,
+                                            ymax=order+margin,
+                                            ...),
                         colour = outline,
                         fill = fill,
                         size = size)
@@ -132,7 +253,7 @@ draw_chains <- function(p,
 #' data$type.
 #' @param label_domains Option to label domains or not.
 #' @param label_size Size of the text used for labels.
-#' @param show.legend Option to include legend in this layer
+#' @param margin Control width of domain rect.
 #' @return A ggplot2 object either in the plot window or as an object with an
 #' additional geom_rect layer.
 #'
@@ -149,16 +270,16 @@ draw_chains <- function(p,
 draw_domains <- function(p,
                         data = data,
                         label_domains = TRUE,
-                        label_size = 4,
-                        show.legend = TRUE){
+                        label_size = 4, 
+                        margin = .25,
+                        ...){
     begin=end=description=NULL
     p <- p + ggplot2::geom_rect(data= data[data$type == "DOMAIN",],
             mapping=ggplot2::aes(xmin=begin,
                         xmax=end,
-                        ymin=order-0.25,
-                        ymax=order+0.25,
-                        fill=description),
-                        show.legend = show.legend)
+                        ymin=order-margin,
+                        ymax=order+margin,
+                        fill=description), ...)
 
     if(label_domains == TRUE){
         p <- p + ggplot2::geom_label(data = data[data$type == "DOMAIN", ],
@@ -167,10 +288,8 @@ draw_domains <- function(p,
                             label = description),
                             size = label_size)
     }
-
     return(p)
 }
-
 
 
 ### draw_phospho
@@ -448,4 +567,3 @@ draw_recept_dom <- function(p,
 
     return(p)
 }
-
